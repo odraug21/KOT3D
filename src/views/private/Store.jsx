@@ -1,33 +1,62 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PostCard from "../../components/PostCard";
-
-const MOCK_POSTS = [
-  { id: 1, title: "Figura Anime 10cm", category: "Anime", price: 12990, cover_url: "https://picsum.photos/seed/kot1/600/400" },
-  { id: 2, title: "Mini Me Personalizado", category: "Personalizadas", price: 59990, cover_url: "https://picsum.photos/seed/kot2/600/400" },
-  { id: 3, title: "Figura Gaming", category: "Gaming", price: 14990, cover_url: "https://picsum.photos/seed/kot3/600/400" },
-];
+import api from "../../services/api";
 
 export default function Store() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState("");
+
+  const loadPosts = async () => {
+    setLoading(true);
+    setMsg("");
+    try {
+      const res = await api.get("/posts");
+      setPosts(res.data || []);
+    } catch (err) {
+      setPosts([]);
+      setMsg(err?.response?.data?.message || "No se pudieron cargar los productos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // En Hito 3 esto se reemplaza por GET /posts
-    setPosts(MOCK_POSTS);
+    loadPosts();
   }, []);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     if (!s) return posts;
-    return posts.filter((p) => p.title.toLowerCase().includes(s));
+    return posts.filter((p) => (p.title || "").toLowerCase().includes(s));
   }, [posts, search]);
 
   const onView = (id) => navigate(`/posts/${id}`);
-  const onFav = (id) => {
-    // En Hito 3: POST /favorites
-    alert(`Agregado a favoritos (demo): post ${id}`);
+
+  // ✅ Toggle favoritos: si ya existe (409) => lo elimina
+  const onFav = async (id) => {
+    try {
+      await api.post("/favorites", { post_id: id });
+      // opcional: feedback
+      // alert("Agregado a favoritos ✅");
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        // ya estaba -> quitar
+        try {
+          await api.delete(`/favorites/${id}`);
+          // alert("Quitado de favoritos ✅");
+        } catch (e2) {
+          console.error(e2);
+          alert(e2?.response?.data?.message || "No se pudo quitar de favoritos");
+        }
+      } else {
+        console.error(err);
+        alert(err?.response?.data?.message || "No se pudo agregar a favoritos");
+      }
+    }
   };
 
   return (
@@ -43,6 +72,9 @@ export default function Store() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      {loading && <div className="alert alert-info">Cargando productos...</div>}
+      {!loading && msg && <div className="alert alert-danger">{msg}</div>}
 
       <div className="row g-3">
         {filtered.map((p) => (

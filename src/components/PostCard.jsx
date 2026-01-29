@@ -1,4 +1,35 @@
-export default function PostCard({ post, onView, onFav }) {
+import { useState } from "react";
+import api from "../services/api";
+
+export default function PostCard({ post, onView }) {
+  const [fav, setFav] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const toggleFav = async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      if (!fav) {
+        await api.post("/favorites", { post_id: post.id });
+        setFav(true);
+      } else {
+        await api.delete(`/favorites/${post.id}`);
+        setFav(false);
+      }
+    } catch (err) {
+      // Si ya está en favoritos, backend responde 409
+      if (err?.response?.status === 409) {
+        setFav(true);
+      } else {
+        console.error(err);
+        alert(err?.response?.data?.message || "Error con favoritos");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="card h-100">
       <img
@@ -16,8 +47,14 @@ export default function PostCard({ post, onView, onFav }) {
           <button className="btn btn-dark btn-sm w-100" onClick={() => onView(post.id)}>
             Ver
           </button>
-          <button className="btn btn-outline-danger btn-sm" onClick={() => onFav(post.id)}>
-            ❤
+
+          <button
+            className="btn btn-outline-danger btn-sm"
+            onClick={toggleFav}
+            disabled={loading}
+            title={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          >
+            {fav ? "❤️" : "🤍"}
           </button>
         </div>
       </div>

@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 
 function requireAuth(req, res, next) {
+  // ✅ Permitir preflight CORS sin token
+  if (req.method === "OPTIONS") return next();
+
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
