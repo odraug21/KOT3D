@@ -13,39 +13,40 @@ const favoritesRoutes = require("../routes/favorites.routes");
 
 const app = express();
 
+// (Opcional) log para debug
 app.use((req, res, next) => {
   console.log("ORIGIN:", req.headers.origin, "|", req.method, req.url);
   next();
 });
 
-
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:3001",
-  process.env.FRONTEND_URL, // ejemplo: https://kot3d.netlify.app
+  process.env.FRONTEND_URL, // https://kot3d.netlify.app
 ].filter(Boolean);
 
-// ✅ CORS options (reutilizable para app.use y preflight)
 const corsOptions = {
   origin: (origin, cb) => {
-    // Permite llamadas sin Origin (Thunder Client / Postman / curl)
+    // requests sin Origin (Postman/curl)
     if (!origin) return cb(null, true);
 
-    // Permite solo los orígenes aprobados
+    // allowlist
     if (allowedOrigins.includes(origin)) return cb(null, true);
 
-    // ❗Lanzamos error para que lo capture el middleware de abajo
-    return cb(new Error("CORS blocked"), false);
+    // bloquear
+    return cb(null, false);
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
 };
 
-// ✅ CORS principal
+// ✅ CORS SIEMPRE antes de rutas
 app.use(cors(corsOptions));
-
-// ✅ Preflight (NO usar "*" como string; usar regex o "/*")
-app.options(/.*/, cors(corsOptions));
+// ✅ Preflight global (responde 204 con headers correctos)
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
@@ -57,12 +58,7 @@ app.use("/categories", categoriesRoutes);
 app.use("/posts", postsRoutes);
 app.use("/favorites", favoritesRoutes);
 
-// ✅ Respuesta si CORS bloquea (ahora sí se dispara)
-app.use((err, req, res, next) => {
-  if (err && String(err.message).toLowerCase().includes("cors")) {
-    return res.status(403).json({ message: "CORS blocked" });
-  }
-  next(err);
-});
+// ❗ Quita el middleware que devuelve 403 "CORS blocked"
+// porque rompe el preflight del navegador.
 
 module.exports = app;
