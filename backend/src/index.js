@@ -1,6 +1,8 @@
-require("dotenv").config();
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
-    console.log("ENV:", process.env.PORT, process.env.DB_NAME, process.env.DB_USER);
+console.log("ENV:", process.env.PORT, process.env.DB_NAME, process.env.DB_USER);
 
 const app = require("./app");
 

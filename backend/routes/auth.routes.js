@@ -22,26 +22,42 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ message: "Faltan datos" });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: "Faltan datos" });
 
-  const userRes = await db.query("SELECT * FROM users WHERE email=$1", [email]);
-  const user = userRes.rows[0];
-  if (!user) return res.status(401).json({ message: "Credenciales inválidas" });
+    const userRes = await db.query("SELECT * FROM users WHERE email=$1", [email]);
+    const user = userRes.rows[0];
+    if (!user) return res.status(401).json({ message: "Credenciales inválidas" });
 
-  const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ message: "Credenciales inválidas" });
+    if (!user.password_hash) {
+      console.error("Usuario sin password_hash en BD:", user.email);
+      return res.status(500).json({ message: "Usuario sin password hash en BD" });
+    }
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email, name: user.name },
-    process.env.JWT_SECRET,
-    { expiresIn: "2h" }
-  );
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET missing en producción");
+      return res.status(500).json({ message: "JWT_SECRET faltante" });
+    }
 
-  res.json({
-    token,
-    user: { id: user.id, name: user.name, email: user.email, avatar_url: user.avatar_url || "" },
-  });
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) return res.status(401).json({ message: "Credenciales inválidas" });
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, avatar_url: user.avatar_url || "" },
+    });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    return res.status(500).json({ message: "Error servidor" });
+  }
 });
+
 
 module.exports = router;
