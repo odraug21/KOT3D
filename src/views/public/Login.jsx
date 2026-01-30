@@ -15,6 +15,12 @@ export default function Login() {
     e.preventDefault();
     setMsg("");
 
+console.log("REACT_APP_API_URL:", process.env.REACT_APP_API_URL);
+console.log("AXIOS baseURL:", api.defaults.baseURL);
+
+
+
+
     try {
       const res = await api.post("/auth/login", { email, password });
       const { token, user } = res.data;

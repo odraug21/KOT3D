@@ -1,12 +1,17 @@
 import axios from "axios";
 
-export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
+const baseURL =
+  process.env.REACT_APP_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://kot3d-production.up.railway.app"); // fallback prod
+
+const api = axios.create({ baseURL });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
-
-export function setAuthToken(token) {
-  api.defaults.headers.common.Authorization = token ? `Bearer ${token}` : "";
-}
-
 
 export default api;
