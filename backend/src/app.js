@@ -37,10 +37,16 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// ✅ CORS principal
 app.use(cors(corsOptions));
 
-// ✅ Preflight (Express 5 NO acepta "*")
-app.options("/*", cors(corsOptions));
+// ✅ Preflight manual (NO usar app.options con "*" o "/*" en Express 5)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, () => res.sendStatus(204));
+  }
+  next();
+});
 
 app.use(express.json());
 
