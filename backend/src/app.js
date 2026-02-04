@@ -23,47 +23,35 @@ app.use((req, res, next) => {
 });
 
 // ✅ Lista fija + soporte dominios Vercel (preview)
-const allowedExactOrigins = [
+const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:3002",
   "http://localhost:5173",
-  "https://kot-3-d.vercel.app",
-  process.env.FRONTEND_URL, // si la tienes seteada en Railway
+  process.env.FRONTEND_URL, // prod (Vercel)
 ].filter(Boolean);
-
-// acepta previews tipo https://algo.vercel.app
-const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/i;
 
 const corsOptions = {
   origin: (origin, cb) => {
-    // requests sin Origin (Postman/curl/mobile) => permitir
+    // Permitir Postman/curl (sin origin)
     if (!origin) return cb(null, true);
 
-    if (allowedExactOrigins.includes(origin)) return cb(null, true);
-    if (vercelPreviewRegex.test(origin)) return cb(null, true);
+    // Permitir cualquier localhost (evita sufrir por 3000/3002/etc.)
+    if (origin.startsWith("http://localhost:")) return cb(null, true);
 
-    console.log("CORS BLOCKED ORIGIN:", origin);
-    return cb(new Error("CORS blocked"), false);
+    // Permitir lista explícita (prod)
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+
+    return cb(new Error(`CORS blocked: ${origin}`), false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 204,
 };
 
-// ✅ CORS primero
 app.use(cors(corsOptions));
-
-// ✅ Preflight (Express 5 friendly)
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return cors(corsOptions)(req, res, () => res.sendStatus(204));
-  }
-  next();
-});
-
 app.use(express.json());
+
 
 app.get("/", (req, res) => res.json({ ok: true, name: "KOT3D API" }));
 
