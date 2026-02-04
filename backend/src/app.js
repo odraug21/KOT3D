@@ -16,64 +16,56 @@ const uploadsRoutes = require("../routes/uploads.routes");
 
 const app = express();
 
-// ✅ Importante cuando estás detrás de Railway proxy
-app.set("trust proxy", 1);
-
-// Log útil para debug (déjalo mientras corriges)
-app.use((req, _res, next) => {
+// Debug útil (déjalo mientras estabilizas prod)
+app.use((req, res, next) => {
   console.log("ORIGIN:", req.headers.origin, "|", req.method, req.url);
   next();
 });
 
-const fixedAllowedOrigins = [
+// ✅ Lista fija + soporte dominios Vercel (preview)
+const allowedExactOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
+  "http://localhost:3002",
   "http://localhost:5173",
   "https://kot-3-d.vercel.app",
+  process.env.FRONTEND_URL, // si la tienes seteada en Railway
 ].filter(Boolean);
 
-function isVercelPreview(origin = "") {
-  try {
-    const { hostname } = new URL(origin);
-    return hostname.endsWith(".vercel.app");
-  } catch {
-    return false;
-  }
-}
+// acepta previews tipo https://algo.vercel.app
+const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/i;
 
-function isAllowedOrigin(origin) {
-  if (!origin) return true; // Postman/curl
-  if (fixedAllowedOrigins.includes(origin)) return true;
-  if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return true;
-  if (isVercelPreview(origin)) return true;
-  return false;
-}
+const corsOptions = {
+  origin: (origin, cb) => {
+    // requests sin Origin (Postman/curl/mobile) => permitir
+    if (!origin) return cb(null, true);
 
-/**
- * ✅ En vez de lanzar error, decidimos origin permitido y lo devolvemos.
- * Así el preflight SIEMPRE recibe headers cuando corresponde.
- */
-const corsOptionsDelegate = (req, cb) => {
-  const origin = req.header("Origin");
-  const allowed = isAllowedOrigin(origin);
+    if (allowedExactOrigins.includes(origin)) return cb(null, true);
+    if (vercelPreviewRegex.test(origin)) return cb(null, true);
 
-  cb(null, {
-    origin: allowed ? origin : false, // si no permitido, no setea allow-origin
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 204,
-  });
+    console.log("CORS BLOCKED ORIGIN:", origin);
+    return cb(new Error("CORS blocked"), false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
 };
 
-app.use(cors(corsOptionsDelegate));
+// ✅ CORS primero
+app.use(cors(corsOptions));
 
-// ✅ responder preflight siempre
-app.options("*", cors(corsOptionsDelegate));
+// ✅ Preflight (Express 5 friendly)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, () => res.sendStatus(204));
+  }
+  next();
+});
 
 app.use(express.json());
 
-app.get("/", (_req, res) => res.json({ ok: true, name: "KOT3D API" }));
+app.get("/", (req, res) => res.json({ ok: true, name: "KOT3D API" }));
 
 app.use("/admin", adminRoutes);
 app.use("/auth", authRoutes);
@@ -83,7 +75,16 @@ app.use("/posts", postsRoutes);
 app.use("/favorites", favoritesRoutes);
 app.use("/orders", ordersRoutes);
 
-app.use("/uploads", express.static("uploads"));
+// static + route
+app.use("/uploads", require("express").static("uploads"));
 app.use("/uploads", uploadsRoutes);
+
+// Handler para respuesta cuando CORS bloquea
+app.use((err, req, res, next) => {
+  if (err && String(err.message).toLowerCase().includes("cors")) {
+    return res.status(403).json({ message: "CORS blocked", origin: req.headers.origin || null });
+  }
+  next(err);
+});
 
 module.exports = app;
