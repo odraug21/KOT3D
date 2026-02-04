@@ -57,7 +57,9 @@ export default function AppNavbar() {
                 <li className="nav-item">
                   <NavLink className="nav-link d-flex align-items-center gap-2" to="/cart">
                     <span>Carrito</span>
-                    {cartCount > 0 && <span className="badge bg-warning text-dark">{cartCount}</span>}
+                    {cartCount > 0 && (
+                      <span className="badge bg-warning text-dark">{cartCount}</span>
+                    )}
                   </NavLink>
                 </li>
 
@@ -81,7 +83,9 @@ export default function AppNavbar() {
                 <li className="nav-item">
                   <NavLink className="nav-link d-flex align-items-center gap-2" to="/cart">
                     <span>Carrito</span>
-                    {cartCount > 0 && <span className="badge bg-warning text-dark">{cartCount}</span>}
+                    {cartCount > 0 && (
+                      <span className="badge bg-warning text-dark">{cartCount}</span>
+                    )}
                   </NavLink>
                 </li>
 
@@ -104,7 +108,10 @@ export default function AppNavbar() {
                     type="button"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
-                    style={{ textuhin: "inherit" }}
+                    style={{
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
                   >
                     Admin
                   </button>
