@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PostCard from "../../components/PostCard";
 import api from "../../services/api";
+import { useCart } from "../../context/CartContext";
 
 export default function Store() {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
+
   const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -36,27 +39,10 @@ export default function Store() {
 
   const onView = (id) => navigate(`/posts/${id}`);
 
-  // ✅ Toggle favoritos: si ya existe (409) => lo elimina
-  const onFav = async (id) => {
-    try {
-      await api.post("/favorites", { post_id: id });
-      // opcional: feedback
-      // alert("Agregado a favoritos ✅");
-    } catch (err) {
-      if (err?.response?.status === 409) {
-        // ya estaba -> quitar
-        try {
-          await api.delete(`/favorites/${id}`);
-          // alert("Quitado de favoritos ✅");
-        } catch (e2) {
-          console.error(e2);
-          alert(e2?.response?.data?.message || "No se pudo quitar de favoritos");
-        }
-      } else {
-        console.error(err);
-        alert(err?.response?.data?.message || "No se pudo agregar a favoritos");
-      }
-    }
+  const onAddToCart = (post) => {
+    addToCart(post, 1);
+    // Si quieres que al agregar lo mande al carrito:
+    // navigate("/cart");
   };
 
   return (
@@ -79,7 +65,7 @@ export default function Store() {
       <div className="row g-3">
         {filtered.map((p) => (
           <div className="col-12 col-sm-6 col-lg-4" key={p.id}>
-            <PostCard post={p} onView={onView} onFav={onFav} />
+            <PostCard post={p} onView={onView} onAddToCart={onAddToCart} />
           </div>
         ))}
       </div>

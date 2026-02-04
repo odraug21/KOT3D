@@ -4,12 +4,14 @@ if (process.env.NODE_ENV !== "production") {
 
 const express = require("express");
 const cors = require("cors");
-
+const adminRoutes = require("../routes/admin.routes");
 const authRoutes = require("../routes/auth.routes");
 const usersRoutes = require("../routes/users.routes");
 const categoriesRoutes = require("../routes/categories.routes");
 const postsRoutes = require("../routes/posts.routes");
 const favoritesRoutes = require("../routes/favorites.routes");
+const ordersRoutes = require("../routes/orders.routes");
+const uploadsRoutes = require("../routes/uploads.routes");
 
 const app = express();
 
@@ -37,6 +39,7 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+
 // ✅ CORS principal
 app.use(cors(corsOptions));
 
@@ -51,12 +54,15 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 app.get("/", (req, res) => res.json({ ok: true, name: "KOT3D API" }));
-
+app.use("/admin", adminRoutes);
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
 app.use("/categories", categoriesRoutes);
 app.use("/posts", postsRoutes);
 app.use("/favorites", favoritesRoutes);
+app.use("/orders", ordersRoutes);
+app.use("/uploads", require("express").static("uploads"));
+app.use("/uploads", uploadsRoutes); // POST /uploads
 
 // Respuesta si CORS bloquea
 app.use((err, req, res, next) => {

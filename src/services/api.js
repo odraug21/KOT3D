@@ -1,8 +1,12 @@
 import axios from "axios";
 
+const isLocalhost =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+
 const baseURL =
   process.env.REACT_APP_API_URL ||
-  (window.location.hostname === "localhost"
+  (isLocalhost
     ? "http://localhost:3000"
     : "https://kot3d-production.up.railway.app"); // fallback prod
 

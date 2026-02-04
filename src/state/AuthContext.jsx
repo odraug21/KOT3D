@@ -1,12 +1,17 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
+
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
@@ -19,9 +24,19 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem("user");
   }, [user]);
 
-  const login = ({ token, user }) => {
-    setToken(token);
-    setUser(user);
+  const login = ({ token: t, user: u }) => {
+    setToken(t || "");
+    setUser(u ? { ...u, role: u.role || "user" } : null);
+  };
+
+  // ✅ NUEVO: actualiza solo user, NO toca token
+  const updateUser = (patchOrUser) => {
+    if (!patchOrUser) return;
+    // si viene un objeto completo, lo usamos; si viene un patch, lo mezclamos
+    setUser((prev) => {
+      const next = patchOrUser?.id ? patchOrUser : { ...(prev || {}), ...(patchOrUser || {}) };
+      return next ? { ...next, role: next.role || "user" } : null;
+    });
   };
 
   const logout = () => {
@@ -29,11 +44,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = useMemo(() => {
+    const isLoggedIn = !!token;
+    const isAdmin = user?.role === "admin";
+
+    return { token, user, login, updateUser, logout, isLoggedIn, isAdmin };
+  }, [token, user]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

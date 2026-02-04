@@ -8,14 +8,21 @@ function requireAuth(req, res, next) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
   if (!token) return res.status(401).json({ message: "Token requerido" });
+  if (!process.env.JWT_SECRET) return res.status(500).json({ message: "JWT_SECRET faltante" });
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload; // { id, email, name }
+    req.user = payload; // { id, email, name, role }
     next();
-  } catch {
+  } catch (e) {
     return res.status(401).json({ message: "Token inválido" });
   }
 }
 
-module.exports = { requireAuth };
+function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: "No autenticado" });
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Solo admin" });
+  next();
+}
+
+module.exports = { requireAuth, requireAdmin };
