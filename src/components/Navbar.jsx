@@ -101,17 +101,14 @@ export default function AppNavbar() {
                   </NavLink>
                 </li>
 
-                {/* ✅ Dropdown Admin (FIX: button en vez de <a href="#">) */}
+                {/* Dropdown Admin */}
                 <li className="nav-item dropdown">
                   <button
                     className="nav-link dropdown-toggle btn btn-link p-0"
                     type="button"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
-                    style={{
-                      textDecoration: "none",
-                      color: "inherit",
-                    }}
+                    style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Admin
                   </button>
@@ -120,6 +117,16 @@ export default function AppNavbar() {
                     <li>
                       <NavLink className="dropdown-item" to="/admin/users">
                         Usuarios
+                      </NavLink>
+                    </li>
+
+                    <li>
+                      <hr className="dropdown-divider" />
+                    </li>
+
+                    <li>
+                      <NavLink className="dropdown-item" to="/admin/imagenes">
+                        Subir imágenes
                       </NavLink>
                     </li>
                   </ul>

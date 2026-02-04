@@ -11,6 +11,7 @@ import Profile from "../views/private/Profile";
 import Favorites from "../views/private/Favorites";
 import MyPosts from "../views/private/MyPosts";
 import EditPost from "../views/private/Editpost";
+import AdminImagenes from "../pages/AdminImagenes";
 
 import CartPage from "../pages/Cart/Cart";
 import UploadProof from "../pages/Orders/UploadProof";
@@ -38,7 +39,7 @@ export default function AppRouter() {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/my-posts" element={<MyPosts />} />
         <Route path="/posts/:id/edit" element={<EditPost />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/imagenes" element={<AdminImagenes />} />
 
         {/* ✅ Subir comprobante (solo logeado) */}
         <Route path="/orders/:id/proof" element={<UploadProof />} />
