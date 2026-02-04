@@ -97,25 +97,24 @@ export default function AppNavbar() {
                   </NavLink>
                 </li>
 
-                {/* ✅ Dropdown Admin */}
+                {/* ✅ Dropdown Admin (FIX: button en vez de <a href="#">) */}
                 <li className="nav-item dropdown">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    role="button"
+                  <button
+                    className="nav-link dropdown-toggle btn btn-link p-0"
+                    type="button"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
+                    style={{ textuhin: "inherit" }}
                   >
                     Admin
-                  </a>
+                  </button>
+
                   <ul className="dropdown-menu dropdown-menu-dark">
                     <li>
                       <NavLink className="dropdown-item" to="/admin/users">
                         Usuarios
                       </NavLink>
                     </li>
-                    {/* Si luego agregas más secciones admin, van aquí */}
-                    {/* <li><NavLink className="dropdown-item" to="/admin/orders">Pedidos</NavLink></li> */}
                   </ul>
                 </li>
               </>
